@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VERENA Kappa — Comparador de Avaliações</title>
+
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Aplicativo para importar avaliações e calcular Kappa no Projeto VERENA.">
+
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icons/icon-192.png">
+
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #243247;
+      --accent: #6366f1;
+      --accent2: #a5b4fc;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --danger: #f87171;
+      --success: #34d399;
+      --info: #38bdf8;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    body { min-height: 100vh; }
+
+    .app-wrapper {
+      width: 100%;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 80% 40% at 50% -10%, rgba(99,102,241,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 85% 80%, rgba(56,189,248,0.07) 0%, transparent 60%),
+        var(--bg);
+      padding: 2rem 1rem 4rem;
+    }
+
+    .inner {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .app-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      color: var(--accent2);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 0.85rem;
+    }
+
+    .app-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.3rem;
+      margin: 0 0 0.5rem;
+      color: #fff;
+      line-height: 1.15;
+    }
+
+    .app-subtitle {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--text-muted);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 1.4rem;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-weight: 700;
+      font-size: 1.02rem;
+      color: #fff;
+      margin-bottom: 1rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .card-header svg {
+      color: var(--accent2);
+      flex-shrink: 0;
+    }
+
+    .small-text {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger {
+      border: none;
+      border-radius: 12px;
+      padding: 0.8rem 1rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      transition: transform 0.1s, opacity 0.2s, background 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .btn-primary:hover { background: #4f46e5; }
+
+    .btn-secondary {
+      color: #fff;
+      background: rgba(99,102,241,0.18);
+      border: 1px solid rgba(99,102,241,0.28);
+    }
+
+    .btn-danger {
+      color: #fff;
+      background: rgba(248,113,113,0.18);
+      border: 1px solid rgba(248,113,113,0.28);
+    }
+
+    .btn-primary:active,
+    .btn-secondary:active,
+    .btn-danger:active {
+      transform: scale(0.98);
+    }
+
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .task-item {
+      display: flex;
+      gap: 0.85rem;
+      align-items: flex-start;
+      padding: 1rem;
+      border-radius: 14px;
+      background: var(--surface2);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .task-icon {
+      width: 38px;
+      height: 38px;
+      min-width: 38px;
+      border-radius: 10px;
+      background: rgba(99,102,241,0.15);
+      color: var(--accent2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .task-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-title {
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      font-size: 0.95rem;
+    }
+
+    .task-prompt {
+      color: var(--text-muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+      margin-bottom: 0.3rem;
+    }
+
+    .task-date {
+      color: #64748b;
+      font-size: 0.75rem;
+    }
+
+    .kappa-result-grid {
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .kappa-summary {
+      padding: 1rem;
+      border-radius: 14px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.22);
+    }
+
+    .kappa-summary strong {
+      display: block;
+      color: #fff;
+      margin-bottom: 0.2rem;
+      font-size: 1rem;
+    }
+
+    .kappa-summary span {
+      color: var(--accent2);
+      font-weight: 700;
+    }
+
+    .formula-box {
+      padding: 1rem;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px dashed rgba(255,255,255,0.12);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .toast {
+      position: fixed;
+      right: 1rem;
+      bottom: 1rem;
+      background: #1e293b;
+      color: var(--success);
+      border: 1px solid rgba(52,211,153,0.35);
+      border-radius: 12px;
+      padding: 0.7rem 1rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      opacity: 0;
+      transform: translateY(70px);
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 999;
+      max-width: calc(100vw - 2rem);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 640px) {
+      .app-title { font-size: 2rem; }
+      .card { padding: 1rem; }
+      .toolbar { flex-direction: column; }
+      .task-item { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-wrapper">
+    <div class="inner">
+
+      <header class="app-header">
+        <div class="badge">
+          <i data-lucide="sigma" style="width:12px;height:12px;"></i>
+          <span>VERENA Kappa</span>
+        </div>
+        <h1 class="app-title">Comparador de Avaliações</h1>
+        <p class="app-subtitle">Importe os CSVs da Duda e do Luka para calcular o Kappa</p>
+      </header>
+
+      <section class="card">
+        <div class="card-header">
+          <i data-lucide="info" style="width:18px;height:18px;"></i>
+          <span>Como usar este aplicativo</span>
+        </div>
+        <div class="formula-box">
+          1. Importe o CSV das avaliações da Duda.<br>
+          2. Importe o CSV das avaliações do Luka.<br>
+          3. O sistema junta os dados automaticamente.<br>
+          4. Clique em <strong>Calcular Kappa</strong>.<br>
+          5. O app compara apenas cenários com o mesmo <strong>scenario_id</strong> avaliados por ambos.
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <i data-lucide="upload" style="width:18px;height:18px;"></i>
+          <span>Importação dos CSVs</span>
+        </div>
+
+        <div class="toolbar" style="margin-bottom:1rem;">
+          <label for="importDudaInput" class="btn-secondary" style="cursor:pointer;">
+            <i data-lucide="file-up" style="width:14px;height:14px;"></i>
+            <span>Importar CSV da Duda</span>
+          </label>
+          <input type="file" id="importDudaInput" accept=".csv,text/csv" style="display:none;">
+
+          <label for="importLukaInput" class="btn-secondary" style="cursor:pointer;">
+            <i data-lucide="file-up" style="width:14px;height:14px;"></i>
+            <span>Importar CSV do Luka</span>
+          </label>
+          <input type="file" id="importLukaInput" accept=".csv,text/csv" style="display:none;">
+
+          <button type="button" class="btn-danger" id="clearBtn">
+            <i data-lucide="trash" style="width:14px;height:14px;"></i>
+            <span>Limpar tudo</span>
+          </button>
+        </div>
+
+        <div id="importSummary" class="task-list"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <i data-lucide="database" style="width:18px;height:18px;"></i>
+          <span>Registros Importados</span>
+        </div>
+
+        <div id="listaAvaliacoes" class="task-list"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <i data-lucide="calculator" style="width:18px;height:18px;"></i>
+          <span>Cálculo de Kappa</span>
+        </div>
+
+        <div class="toolbar" style="margin-bottom:1rem;">
+          <button type="button" class="btn-primary" id="calcKappaBtn">
+            <i data-lucide="sigma" style="width:14px;height:14px;"></i>
+            <span>Calcular Kappa</span>
+          </button>
+        </div>
+
+        <div class="formula-box" style="margin-bottom:1rem;">
+          Kappa ponderado para escala Likert de 1 a 5.
+          <br>0–0,20 = leve
+          <br>0,21–0,40 = razoável
+          <br>0,41–0,60 = moderada
+          <br>0,61–0,80 = substancial
+          <br>0,81–1,00 = quase perfeita
+        </div>
+
+        <div id="kappaResultados" class="kappa-result-grid"></div>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <i data-lucide="check-circle" style="width:15px;height:15px;"></i>
+    <span id="toastMsg">Operação realizada.</span>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "verena_kappa_importado";
+
+    const importDudaInput = document.getElementById("importDudaInput");
+    const importLukaInput = document.getElementById("importLukaInput");
+    const clearBtn = document.getElementById("clearBtn");
+    const calcKappaBtn = document.getElementById("calcKappaBtn");
+
+    const importSummary = document.getElementById("importSummary");
+    const listaAvaliacoes = document.getElementById("listaAvaliacoes");
+    const kappaResultados = document.getElementById("kappaResultados");
+
+    const toast = document.getElementById("toast");
+    const toastMsg = document.getElementById("toastMsg");
+
+    let toastTimer = null;
+
+    function getData() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    }
+
+    function saveData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function showToast(msg, isError = false) {
+      toastMsg.textContent = msg;
+      toast.style.color = isError ? "var(--danger)" : "var(--success)";
+      toast.style.borderColor = isError ? "rgba(248,113,113,0.35)" : "rgba(52,211,153,0.35)";
+      toast.classList.add("show");
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    function escapeHTML(str) {
+      const d = document.createElement("div");
+      d.appendChild(document.createTextNode(str || ""));
+      return d.innerHTML;
+    }
+
+    function parseCsvLine(line) {
+      const result = [];
+      let current = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const next = line[i + 1];
+
+        if (char === '"' && inQuotes && next === '"') {
+          current += '"';
+          i++;
+        } else if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ";" && !inQuotes) {
+          result.push(current);
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+
+      result.push(current);
+      return result;
+    }
+
+    function normalizeHeader(value) {
+      return (value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function renderSummary() {
+      const data = getData();
+
+      const dudaCount = data.filter(item => item.avaliador === "Duda").length;
+      const lukaCount = data.filter(item => item.avaliador === "Luka").length;
+
+      importSummary.innerHTML = `
+        <div class="task-item">
+          <div class="task-icon">
+            <i data-lucide="users" style="width:16px;height:16px;"></i>
+          </div>
+          <div class="task-info">
+            <div class="task-title">Resumo das importações</div>
+            <div class="task-prompt">Duda: ${dudaCount} avaliação(ões) | Luka: ${lukaCount} avaliação(ões)</div>
+          </div>
+        </div>
+      `;
+      lucide.createIcons();
+    }
+
+    function renderAvaliacoes() {
+      const data = getData();
+
+      if (!data.length) {
+        listaAvaliacoes.innerHTML = `
+          <div class="empty-state">
+            <i data-lucide="file-x" style="width:40px;height:40px;display:block;"></i>
+            <p>Nenhuma avaliação importada ainda.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      listaAvaliacoes.innerHTML = data.map(item => `
+        <div class="task-item">
+          <div class="task-icon">
+            <i data-lucide="check-square" style="width:16px;height:16px;"></i>
+          </div>
+          <div class="task-info">
+            <div class="task-title">${escapeHTML(item.scenario_id)} — ${escapeHTML(item.avaliador)}</div>
+            <div class="task-prompt">
+              Protocolo: ${escapeHTML(item.protocolo)}<br>
+              Prot.: ${item.nota_protocolo} | Seg.: ${item.nota_seguranca} | Fid.: ${item.nota_precisao} | Lit.: ${item.nota_clareza}
+            </div>
+            <div class="task-date">${escapeHTML(item.timestamp || "")}</div>
+          </div>
+        </div>
+      `).join("");
+
+      lucide.createIcons();
+    }
+
+    function importCsv(file, avaliadorEsperado) {
+      return file.text().then(text => {
+        const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+        if (lines.length < 2) throw new Error("CSV vazio ou inválido.");
+
+        const header = parseCsvLine(lines[0]).map(normalizeHeader);
+
+        const scenarioIdIndex = header.indexOf("scenario_id");
+        const avaliadorIndex = header.indexOf("avaliador");
+        const protocoloIndex = header.indexOf("protocolo");
+        const notaProtocoloIndex = header.indexOf("nota_protocolo");
+        const notaSegurancaIndex = header.indexOf("nota_seguranca");
+        const notaPrecisaoIndex = header.indexOf("nota_precisao");
+        const notaClarezaIndex = header.indexOf("nota_clareza");
+        const timestampIndex = header.indexOf("timestamp");
+
+        if (
+          scenarioIdIndex === -1 ||
+          avaliadorIndex === -1 ||
+          protocoloIndex === -1 ||
+          notaProtocoloIndex === -1 ||
+          notaSegurancaIndex === -1 ||
+          notaPrecisaoIndex === -1 ||
+          notaClarezaIndex === -1
+        ) {
+          throw new Error("Cabeçalho CSV inválido.");
+        }
+
+        const existing = getData();
+        const existingKeys = new Set(
+          existing.map(item => `${item.scenario_id}__${item.avaliador}`)
+        );
+
+        let importedCount = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+          const cols = parseCsvLine(lines[i]);
+
+          const scenario_id = (cols[scenarioIdIndex] || "").trim();
+          const avaliador = (cols[avaliadorIndex] || "").trim();
+          const protocolo = (cols[protocoloIndex] || "").trim();
+          const nota_protocolo = Number((cols[notaProtocoloIndex] || "").trim());
+          const nota_seguranca = Number((cols[notaSegurancaIndex] || "").trim());
+          const nota_precisao = Number((cols[notaPrecisaoIndex] || "").trim());
+          const nota_clareza = Number((cols[notaClarezaIndex] || "").trim());
+          const timestamp = (cols[timestampIndex] || "").trim();
+
+          if (!scenario_id || !avaliador) continue;
+          if (avaliador !== avaliadorEsperado) continue;
+
+          const key = `${scenario_id}__${avaliador}`;
+          if (existingKeys.has(key)) continue;
+
+          existing.push({
+            scenario_id,
+            avaliador,
+            protocolo,
+            nota_protocolo,
+            nota_seguranca,
+            nota_precisao,
+            nota_clareza,
+            timestamp
+          });
+
+          existingKeys.add(key);
+          importedCount++;
+        }
+
+        saveData(existing);
+        return importedCount;
+      });
+    }
+
+    function getPairsByField(field) {
+      const data = getData();
+      const byScenario = {};
+
+      data.forEach(item => {
+        if (!byScenario[item.scenario_id]) byScenario[item.scenario_id] = {};
+        byScenario[item.scenario_id][item.avaliador] = item;
+      });
+
+      const pairs = [];
+      Object.keys(byScenario).forEach(sid => {
+        const pair = byScenario[sid];
+        if (pair.Duda && pair.Luka) {
+          pairs.push([Number(pair.Duda[field]), Number(pair.Luka[field])]);
+        }
+      });
+
+      return pairs;
+    }
+
+    function computeWeightedKappa(pairs, categories = [1,2,3,4,5]) {
+      const k = categories.length;
+      const map = {};
+      categories.forEach((c, i) => map[c] = i);
+
+      if (!pairs.length) return null;
+
+      const O = Array.from({ length: k }, () => Array(k).fill(0));
+
+      pairs.forEach(([a, b]) => {
+        if (map[a] === undefined || map[b] === undefined) return;
+        O[map[a]][map[b]] += 1;
+      });
+
+      const n = pairs.length;
+      const rowTotals = O.map(row => row.reduce((s, v) => s + v, 0));
+      const colTotals = Array.from({ length: k }, (_, j) => O.reduce((s, row) => s + row[j], 0));
+
+      const W = Array.from({ length: k }, (_, i) =>
+        Array.from({ length: k }, (_, j) => {
+          const diff = i - j;
+          return 1 - ((diff * diff) / ((k - 1) * (k - 1)));
+        })
+      );
+
+      let observed = 0;
+      let expected = 0;
+
+      for (let i = 0; i < k; i++) {
+        for (let j = 0; j < k; j++) {
+          observed += W[i][j] * (O[i][j] / n);
+          expected += W[i][j] * ((rowTotals[i] / n) * (colTotals[j] / n));
+        }
+      }
+
+      if (1 - expected === 0) return 1;
+      return (observed - expected) / (1 - expected);
+    }
+
+    function classifyKappa(kappa) {
+      if (kappa === null || Number.isNaN(kappa)) return "Sem dados";
+      if (kappa < 0) return "Pior que o acaso";
+      if (kappa <= 0.20) return "Leve";
+      if (kappa <= 0.40) return "Razoável";
+      if (kappa <= 0.60) return "Moderada";
+      if (kappa <= 0.80) return "Substancial";
+      return "Quase perfeita";
+    }
+
+    function renderKappa() {
+      const metrics = [
+        { field: "nota_protocolo", label: "Protocolo" },
+        { field: "nota_seguranca", label: "Segurança" },
+        { field: "nota_precisao", label: "Fidedignidade" },
+        { field: "nota_clareza", label: "Literacia" }
+      ];
+
+      const results = metrics.map(m => {
+        const pairs = getPairsByField(m.field);
+        return {
+          label: m.label,
+          n: pairs.length,
+          kappa: computeWeightedKappa(pairs)
+        };
+      });
+
+      const valid = results.filter(r => r.kappa !== null);
+      const meanKappa = valid.length ? valid.reduce((s, r) => s + r.kappa, 0) / valid.length : null;
+
+      if (!valid.length) {
+        kappaResultados.innerHTML = `
+          <div class="empty-state">
+            <i data-lucide="sigma" style="width:40px;height:40px;display:block;"></i>
+            <p>Sem pares suficientes de Duda e Luka no mesmo cenário para calcular o Kappa.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      kappaResultados.innerHTML = `
+        <div class="kappa-summary">
+          <strong>Kappa médio geral</strong>
+          <span>${meanKappa.toFixed(4)} — ${classifyKappa(meanKappa)}</span>
+        </div>
+
+        ${results.map(r => `
+          <div class="task-item">
+            <div class="task-icon">
+              <i data-lucide="bar-chart-3" style="width:16px;height:16px;"></i>
+            </div>
+            <div class="task-info">
+              <div class="task-title">${escapeHTML(r.label)}</div>
+              <div class="task-prompt">
+                ${r.kappa === null ? "Sem dados suficientes" : `${r.kappa.toFixed(4)} — ${classifyKappa(r.kappa)}`}
+              </div>
+              <div class="task-date">Pares comparados: ${r.n}</div>
+            </div>
+          </div>
+        `).join("")}
+      `;
+
+      lucide.createIcons();
+    }
+
+    importDudaInput.addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        const count = await importCsv(file, "Duda");
+        renderSummary();
+        renderAvaliacoes();
+        showToast(`${count} avaliação(ões) da Duda importada(s).`);
+      } catch (error) {
+        console.error(error);
+        showToast("Erro ao importar CSV da Duda.", true);
+      }
+
+      event.target.value = "";
+    });
+
+    importLukaInput.addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        const count = await importCsv(file, "Luka");
+        renderSummary();
+        renderAvaliacoes();
+        showToast(`${count} avaliação(ões) do Luka importada(s).`);
+      } catch (error) {
+        console.error(error);
+        showToast("Erro ao importar CSV do Luka.", true);
+      }
+
+      event.target.value = "";
+    });
+
+    clearBtn.addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_KEY);
+      renderSummary();
+      renderAvaliacoes();
+      renderKappa();
+      showToast("Dados apagados.");
+    });
+
+    calcKappaBtn.addEventListener("click", () => {
+      renderKappa();
+      showToast("Kappa calculado.");
+    });
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", async () => {
+        try {
+          await navigator.serviceWorker.register("./sw.js");
+        } catch (error) {
+          console.error("Erro ao registrar service worker:", error);
+        }
+      });
+    }
+
+    renderSummary();
+    renderAvaliacoes();
+    renderKappa();
+    lucide.createIcons();
+  </script>
+</body>
+</html>
